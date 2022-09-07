@@ -3,14 +3,42 @@ import Select from "react-select";
 import { FaFilePdf } from "react-icons/fa";
 import { useState } from "react";
 import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import { AiFillCloseCircle } from "react-icons/ai";
 const Body = () => {
   const [data, setData] = useState([]);
   const [downloadLink, setDownloadLink] = useState("");
-  console.log(downloadLink);
-  console.log(data);
+  const [paperSize, setPaperSize] = useState({ value: "A4", label: "A4" });
+  const [marginSize, setMarginSize] = useState({
+    value: 0,
+    label: "No Margin",
+  });
+  const [imageFit, setImageFit] = useState({
+    value: "Auto",
+    label: "Auto",
+  });
+
   const fileChange = (e) => {
+    const image = new Image();
+    image.src = e.target.files["0"];
+
     let file = e.target.files["0"];
-    uploadIMG(file);
+
+    let fileExtension = file.name.split(".").pop();
+    let validFileExtensions = ["jpg", "JPG", "jpeg", "JPEG", "PNG", "png"];
+    if (file.size > 1000000) {
+      toast.error("File Very Big! Upload up to 1MB", {
+        duration: 3000,
+        position: "bottom-center",
+      });
+    } else if (!validFileExtensions.includes(fileExtension)) {
+      toast.error("Only JPG, JPEG, PNG are allow!", {
+        duration: 2000,
+        position: "bottom-center",
+      });
+    } else {
+      uploadIMG(file);
+    }
   };
   // Upload File
   const uploadIMG = (file) => {
@@ -18,14 +46,13 @@ const Body = () => {
     MyFormData.append("uploaded_file", file);
     let config = { headers: { "Content-Type": "multipart/form-data" } };
     axios
-      .post("http://localhost:5000/upload", MyFormData, config)
+      .post("https://react-pdf.amitjs.com/upload", MyFormData, config)
       .then((res) => {
         if (res.status === 200 && res.data === "success") {
           let ImageItem = {
             ImageName: file.name,
             ImageSrc: URL.createObjectURL(file),
           };
-          // let ImgURL = URL.createObjectURL(file);
           setData([...data, ImageItem]);
         }
       });
@@ -33,11 +60,20 @@ const Body = () => {
 
   const removeImg = (e) => {
     axios
-      .post("http://localhost:5000/remove", { ImageName: e.ImageName })
+      .post("https://react-pdf.amitjs.com/remove", { ImageName: e.ImageName })
       .then((res) => {
         if (res.status === 200 && res.data === "success") {
           let newData = data.filter((value) => value !== e);
           setData(newData);
+          toast.success("Remove File Success!", {
+            duration: 3000,
+            position: "bottom-center",
+          });
+        } else {
+          toast.error("Something went Wrong! Try again.", {
+            duration: 2000,
+            position: "bottom-center",
+          });
         }
       });
   };
@@ -47,56 +83,76 @@ const Body = () => {
   const createPDF = () => {
     let ImgArrayData = data;
     if (data.length === 0) {
-      alert("Mo Data");
+      toast.error("No File Found!", {
+        duration: 3000,
+        position: "bottom-center",
+      });
     } else {
       // Loading.....
       let postBody = {
         ImgArrayData: ImgArrayData,
-        // pageSize: "...",
-        // pageMargin: "...",
-        // ImgFit: "...",
+        paperSize: paperSize.value,
+        marginSize: marginSize.value,
+        imageFit: imageFit.value,
       };
 
       axios
-        .post("http://localhost:5000/createPDF", postBody)
+        .post("https://react-pdf.amitjs.com/createPDF", postBody)
         .then((res) => {
           if (res.status === 200) {
             setDownloadLink("/downloadPDF/" + res.data);
             console.log(res.data);
           } else {
-            // Error ....
-            alert("Error1");
+            toast.error("Something went Wrong!", {
+              duration: 2000,
+              position: "bottom-center",
+            });
           }
         })
         .catch((e) => {
-          // Error ....
-          alert("Error2");
+          toast.error("Something went Wrong!", {
+            duration: 2000,
+            position: "bottom-center",
+          });
         });
     }
   };
 
-  const paperSize = [
+  const dismiss = () => {
+    toast.dismiss();
+    setDownloadLink("");
+  };
+
+  const paperSizeData = [
     { value: "A4", label: "A4" },
+    { value: "B4", label: "B4" },
     { value: "Letter", label: "Letter" },
     { value: "Legal", label: "Legal" },
     { value: "Tabloid", label: "Tabloid" },
     { value: "Executive", label: "Executive" },
   ];
-  const marginSize = [
-    { value: "No Margin", label: "No Margin" },
-    { value: "Normal", label: "Normal" },
-    { value: "Narrow", label: "Narrow" },
-    { value: "Moderate", label: "Moderate" },
+  const marginSizeData = [
+    { value: 0, label: "No Margin" },
+    { value: 24, label: "Normal" },
+    { value: 12, label: "Narrow" },
+    { value: 18, label: "Moderate" },
   ];
-  const imageFit = [
-    { value: "Image Top", label: "Image Top" },
-    { value: "Image Center", label: "Image Center" },
-    { value: "Image Bottom", label: "Image Bottom" },
-    { value: "Image Cover", label: "Image Cover" },
-    { value: "Image Stretch", label: "Image Stretch" },
+  const imageFitData = [
+    { value: "Auto", label: "Auto" },
+    { value: "Fit", label: "Fit" },
+    { value: "Cover", label: "Cover" },
   ];
+
   return (
-    <div className="body">
+    <div className="main__container">
+      <div>
+        <Toaster
+          position="bottom-right"
+          reverseOrder={false}
+          toastOptions={{ duration: 500000 }}
+        />
+      </div>
+
       <div className="wrapper">
         <div className="wrapper__body">
           <div className="container-fluid">
@@ -122,8 +178,9 @@ const Body = () => {
                         <span>Paper Size</span>
                         <Select
                           className="select__color"
-                          defaultValue={paperSize[0]}
-                          options={paperSize}
+                          defaultValue={paperSizeData[0]}
+                          onChange={setPaperSize}
+                          options={paperSizeData}
                           styles={{
                             option: (provided, state) => ({
                               ...provided,
@@ -172,8 +229,9 @@ const Body = () => {
                         <span>Margin Size</span>
                         <Select
                           className="select__color"
-                          defaultValue={marginSize[0]}
-                          options={marginSize}
+                          defaultValue={marginSizeData[0]}
+                          options={marginSizeData}
+                          onChange={setMarginSize}
                           styles={{
                             option: (provided, state) => ({
                               ...provided,
@@ -222,8 +280,9 @@ const Body = () => {
                         <span>Image Fit</span>
                         <Select
                           className="select__color"
-                          defaultValue={imageFit[0]}
-                          options={imageFit}
+                          defaultValue={imageFitData[0]}
+                          options={imageFitData}
+                          onChange={setImageFit}
                           styles={{
                             option: (provided, state) => ({
                               ...provided,
@@ -272,38 +331,66 @@ const Body = () => {
                     <button className="my__btn mt-3" onClick={createPDF}>
                       <span>
                         <FaFilePdf />
-                      </span>{" "}
+                      </span>
                       Create PDF
                     </button>
-                    {/* <a href={downloadLink}>Click</a> */}
                   </div>
                 </div>
               </div>
               <div className="col-md-9">
                 <div className="preview__section">
-                  <div className="row">
-                    {data.map((item, index) => (
-                      <div className="col-md-2">
-                        <div className="preview__body">
-                          <img
-                            src={item.ImageSrc}
-                            alt=""
-                            className="img-fluid"
-                          />
-                          <button
-                            className="my__btn mt-3"
-                            onClick={(e) => removeImg(item)}
-                          >
-                            Remove
-                          </button>
+                  <div className="container">
+                    <div className="row">
+                      {data.map((item, index) => (
+                        <div key={index} className="col-md-3">
+                          <div className="preview__img__file">
+                            <div className="preview__body">
+                              <div
+                                className={`img__file__body ${paperSize.value} `}
+                              >
+                                <div
+                                  className={`img__file  ${marginSize.label} ${imageFit.value}`}
+                                >
+                                  <img
+                                    src={item.ImageSrc}
+                                    alt=""
+                                    className="img-fluid"
+                                  />
+                                </div>
+                              </div>
+                              <span
+                                className="close mt-3"
+                                onClick={(e) => removeImg(item)}
+                              >
+                                <AiFillCloseCircle />
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {downloadLink !== "" &&
+            toast.custom(
+              <div className="body__download">
+                <div className="download">
+                  <p>Are You Want to Download This PDF File?</p>
+                  <a href={`https://react-pdf.amitjs.com` + downloadLink}>
+                    <button className="my__btn" onClick={dismiss}>
+                      Download PDF
+                    </button>
+                  </a>
+                  <button className="my__btn ml-4 dismiss" onClick={dismiss}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
         </div>
       </div>
     </div>

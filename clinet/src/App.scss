@@ -2,8 +2,10 @@
   margin: 0;
   padding: 0;
 }
+
 body {
   background: #fff;
+  background-image: linear-gradient(to top, #9795f0 0%, #fbc8d4 100%);
   width: 100%;
   min-height: 100vh;
   color: #333;
@@ -26,6 +28,7 @@ body {
 }
 
 .header {
+  background: #252525;
   border-bottom: 1px solid #ddd;
   .wrapper {
     .wrapper__body {
@@ -39,13 +42,16 @@ body {
   }
 }
 
-.body {
+.main__container {
   margin: 50px 0;
   .wrapper {
     .wrapper__body {
       .input__section {
+        background: #fff;
         padding: 25px 10px;
-        border: 1px solid #ddd;
+        position: fixed;
+        width: 278px;
+        // border: 1px solid #252525;
         margin-right: 60px;
         display: flex;
         border-radius: 5px;
@@ -60,20 +66,91 @@ body {
               display: inline-block;
               margin: 5px;
               padding-top: 5px;
+              svg {
+                color: #ddd;
+              }
             }
           }
         }
       }
       .preview__section {
+        .preview__img__file {
+          position: relative;
+          margin-bottom: 20px;
+        }
         margin-left: -30px;
         .preview__body {
+          background: #fff;
+          border-radius: 5px;
+          padding: 18px 18px;
+          overflow: hidden;
+          width: 100%;
+
+          // height: 305px;
           img {
+            width: 160px;
+            height: auto;
           }
-          .my__btn {
-            padding: 7px 43px;
+          .close {
+            position: absolute;
+            top: -41px;
+            right: -14px;
+            cursor: pointer;
+            font-size: 34px;
+            color: red;
           }
         }
       }
+
+      .img__file__body {
+        // position: relative;
+        // width: 198px;
+
+        display: flex;
+        // align-items: center;
+        justify-content: space-around;
+        overflow: hidden;
+        .Normal {
+          padding: 10px;
+          background: #ddd;
+        }
+        .Narrow {
+          padding: 5px;
+          background: #ddd;
+        }
+        .Moderate {
+          padding: 15px;
+          background: #ddd;
+        }
+
+        .Cover {
+          // position: absolute;
+          padding: 0;
+          height: 100%;
+          img {
+            width: 100%;
+            height: 100%;
+          }
+        }
+      }
+    }
+  }
+}
+.body__download {
+  width: 100%;
+  height: 100vh;
+  .download {
+    background: #fff;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 30px 20px;
+    border-radius: 5px;
+    .my__btn {
+      padding: 10px 25px;
+    }
+    .dismiss {
+      margin-left: 10px;
     }
   }
 }

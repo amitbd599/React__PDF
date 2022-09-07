@@ -73,11 +73,15 @@ app.post("/remove", (req, res) => {
 // Create PDF
 app.post("/createPDF", (req, res) => {
   let ImgArrayData = req.body["ImgArrayData"];
-  console.log(ImgArrayData);
+  let paperSize = req.body["paperSize"];
+  let marginSize = req.body["marginSize"];
+  let imageFit = req.body["imageFit"];
+
+  console.log(req.body);
   const doc = new PDFDocument({
     autoFirstPage: false,
-    size: "a4",
-    margin: 50,
+    size: paperSize,
+    margin: marginSize,
   });
   let pdfFileName =
     Math.floor(100000 + Math.random() * 900000) +
@@ -85,13 +89,64 @@ app.post("/createPDF", (req, res) => {
     Math.round(new Date() / 1000) +
     "_output.pdf";
   doc.pipe(fs.createWriteStream("./OutputPDF/" + pdfFileName));
-  let ImageOption = {
-    align: "center",
-    valign: "center",
-    overflow: false,
-  };
+
+  let pageInfo;
+  let ImgOption;
+
+  if (paperSize === "A4") {
+    pageInfo = {
+      width: 595.28 - 2 * marginSize,
+      height: 841.89 - 2 * marginSize,
+    };
+  } else if (paperSize === "B4") {
+    pageInfo = {
+      width: 708.66 - 2 * marginSize,
+      height: 1000.63 - 2 * marginSize,
+    };
+  } else if (paperSize === "Letter") {
+    pageInfo = {
+      width: 612.0 - 2 * marginSize,
+      height: 792.0 - 2 * marginSize,
+    };
+  } else if (paperSize === "Legal") {
+    pageInfo = {
+      width: 612.0 - 2 * marginSize,
+      height: 1008.0 - 2 * marginSize,
+    };
+  } else if (paperSize === "Tabloid") {
+    pageInfo = {
+      width: 792.0 - 2 * marginSize,
+      height: 1224.0 - 2 * marginSize,
+    };
+  } else if (paperSize === "Executive") {
+    pageInfo = {
+      width: 521.86 - 2 * marginSize,
+      height: 756.0 - 2 * marginSize,
+    };
+  }
+
+  if (imageFit === "Auto") {
+    ImgOption = {
+      align: "center",
+      valign: "top",
+    };
+  } else if (imageFit === "Fit") {
+    ImgOption = {
+      fit: [pageInfo.width, pageInfo.height],
+      align: "center",
+      valign: "top",
+    };
+  } else if (imageFit === "Cover") {
+    ImgOption = {
+      cover: [pageInfo.width, pageInfo.height],
+      align: "center",
+      valign: "top",
+      overflow: false,
+    };
+  }
+
   ImgArrayData.forEach((item, i) => {
-    doc.addPage().image("./UploadImgs/" + item.ImageName, ImageOption);
+    doc.addPage().image("./UploadImgs/" + item.ImageName, ImgOption);
   });
 
   doc.end();
@@ -101,7 +156,7 @@ app.post("/createPDF", (req, res) => {
 // Download PDF
 app.get("/downloadPDF/:outputFile", (req, res) => {
   let outputFile = req.params.outputFile;
-  const file = `${__dirname}+"/OutputPDF/+ ${outputFile}`;
+  const file = `${__dirname}` + "/OutputPDF/" + `${outputFile}`;
   res.download(file);
 });
 
